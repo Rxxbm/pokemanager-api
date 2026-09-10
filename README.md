@@ -53,14 +53,14 @@ a entidade `Pokemon` e o contrato `IPokemonRepository`. A camada `main` é a ún
 
 ## 🛠️ Tecnologias Utilizadas
 
-| Categoria           | Ferramenta                                   |
-| ------------------- | -------------------------------------------- |
-| Runtime             | Node.js (v20+)                               |
-| Linguagem           | TypeScript (modo `strict`, com path aliases) |
-| Framework Web       | Express 5                                    |
-| Execução em Dev     | tsx (`tsx watch`)                            |
-| Documentação        | Swagger UI Express + swagger-autogen         |
-| Qualidade / Padrões | ESLint & Prettier                            |
+| Categoria           | Ferramenta                                       |
+| ------------------- | ------------------------------------------------ |
+| Runtime             | Node.js (v20+)                                   |
+| Linguagem           | TypeScript (modo `strict`, com path aliases)     |
+| Framework Web       | Express 5                                        |
+| Execução em Dev     | tsx (`tsx watch`)                                |
+| Documentação        | Swagger UI Express + OpenAPI 3.0 (escrito à mão) |
+| Qualidade / Padrões | ESLint & Prettier                                |
 
 ---
 
@@ -87,23 +87,24 @@ npm install
 npm run start
 ```
 
-O comando `npm run start` gera a especificação Swagger e sobe o servidor com hot reload.
-O servidor iniciará na porta **3333**:
+O servidor iniciará na porta **3333** com hot reload:
 
 - 🚀 **API Base URL:** http://localhost:3333/api/v1
 - 📖 **Documentação Swagger:** http://localhost:3333/api/docs
 
+A especificação OpenAPI é declarada em código (`src/main/config/openapi.ts`) e
+servida diretamente pelo Swagger UI — não há etapa de geração de arquivo.
+
 ### Scripts disponíveis
 
-| Script             | Descrição                                                       |
-| ------------------ | --------------------------------------------------------------- |
-| `npm run start`    | Gera o Swagger e inicia o servidor com hot reload (`tsx watch`) |
-| `npm run dev`      | Inicia o servidor com hot reload (sem regerar o Swagger)        |
-| `npm run swagger`  | Gera o arquivo `swagger-output.json`                            |
-| `npm run build`    | Gera o Swagger e compila o TypeScript (`tsc`)                   |
-| `npm run lint`     | Executa o ESLint                                                |
-| `npm run lint:fix` | Executa o ESLint corrigindo o que for possível                  |
-| `npm run format`   | Formata o código com o Prettier                                 |
+| Script             | Descrição                                      |
+| ------------------ | ---------------------------------------------- |
+| `npm run start`    | Inicia o servidor com hot reload (`tsx watch`) |
+| `npm run dev`      | Alias de `npm run start`                       |
+| `npm run build`    | Compila o TypeScript (`tsc`)                   |
+| `npm run lint`     | Executa o ESLint                               |
+| `npm run lint:fix` | Executa o ESLint corrigindo o que for possível |
+| `npm run format`   | Formata o código com o Prettier                |
 
 ---
 

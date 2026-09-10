@@ -4,10 +4,9 @@
   "description": "API RESTful para gerenciamento do catálogo e times de Pokémons — disciplina de Desenvolvimento de APIs Modernas (UFF).",
   "main": "src/main/server.ts",
   "scripts": {
-    "swagger": "tsx src/main/config/swagger-generator.ts",
-    "start": "npm run swagger && tsx watch src/main/server.ts",
+    "start": "tsx watch src/main/server.ts",
     "dev": "tsx watch src/main/server.ts",
-    "build": "npm run swagger && tsc",
+    "build": "tsc",
     "lint": "eslint src --ext .ts",
     "lint:fix": "eslint src --ext .ts --fix",
     "format": "prettier --write src"
@@ -25,7 +24,6 @@
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.6",
     "prettier": "^3.9.6",
-    "swagger-autogen": "^2.23.7",
     "tsx": "^4.23.12",
     "typescript": "^5.9.3"
   },
