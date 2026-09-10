@@ -75,7 +75,7 @@ a entidade `Pokemon` e o contrato `IPokemonRepository`. A camada `main` é a ún
 
 ```bash
 # 1. Clonar o repositório
-git clone https://github.com/SEU_USUARIO/pokemanager-api.git
+git clone https://github.com/Rxxbm/pokemanager-api.git
 
 # 2. Acessar a pasta do projeto
 cd pokemanager-api
