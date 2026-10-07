@@ -6,7 +6,7 @@
   "scripts": {
     "start": "tsx watch --env-file-if-exists=.env src/main/server.ts",
     "dev": "tsx watch --env-file-if-exists=.env src/main/server.ts",
-    "build": "tsc && tsc-alias",
+    "build": "prisma generate && tsc && tsc-alias",
     "lint": "eslint src --ext .ts",
     "lint:fix": "eslint src --ext .ts --fix",
     "format": "prettier --write src"
@@ -30,8 +30,10 @@
     "typescript": "^5.9.3"
   },
   "dependencies": {
+    "@prisma/client": "^6.19.3",
     "express": "^5.2.1",
     "pg": "^8.23.1",
+    "prisma": "^6.19.3",
     "swagger-ui-express": "^5.0.1"
   }
 }
