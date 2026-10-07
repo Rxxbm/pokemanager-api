@@ -3,6 +3,9 @@ import { GetPokemonByIdUseCase } from '@application/useCases/getPokemonById';
 import { CreatePokemonUseCase } from '@application/useCases/createPokemon';
 import { UpdatePokemonUseCase } from '@application/useCases/updatePokemon';
 import { DeletePokemonUseCase } from '@application/useCases/deletePokemon';
+import { UpdatePokemonLevelUseCase } from '@application/useCases/updatePokemonLevel';
+import { SearchPokemonsByNameUseCase } from '@application/useCases/searchPokemonsByName';
+import { CountPokemonsUseCase } from '@application/useCases/countPokemons';
 import { PokemonController } from '@infrastructure/http/controllers/pokemon.controller';
 import { PgPokemonRepository } from '@infrastructure/database/postgres/pgPokemon.repository';
 
@@ -15,6 +18,13 @@ export function makePokemonController(): PokemonController {
   const createPokemonUseCase = new CreatePokemonUseCase(pokemonRepository);
   const updatePokemonUseCase = new UpdatePokemonUseCase(pokemonRepository);
   const deletePokemonUseCase = new DeletePokemonUseCase(pokemonRepository);
+  const updatePokemonLevelUseCase = new UpdatePokemonLevelUseCase(
+    pokemonRepository,
+  );
+  const searchPokemonsByNameUseCase = new SearchPokemonsByNameUseCase(
+    pokemonRepository,
+  );
+  const countPokemonsUseCase = new CountPokemonsUseCase(pokemonRepository);
 
   return new PokemonController(
     listPokemonsUseCase,
@@ -22,5 +32,8 @@ export function makePokemonController(): PokemonController {
     createPokemonUseCase,
     updatePokemonUseCase,
     deletePokemonUseCase,
+    updatePokemonLevelUseCase,
+    searchPokemonsByNameUseCase,
+    countPokemonsUseCase,
   );
 }

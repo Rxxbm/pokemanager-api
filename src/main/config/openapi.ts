@@ -147,6 +147,133 @@ export const openapiDocument = {
         },
       },
     },
+    '/api/v1/pokemons/search': {
+      get: {
+        tags: ['Pokemons'],
+        summary: 'Busca Pokémons por nome (parcial, ignora maiúsculas)',
+        description: 'Usa `ILIKE` no PostgreSQL. Ex: `pika` retorna Pikachu.',
+        parameters: [
+          {
+            name: 'name',
+            in: 'query',
+            required: true,
+            description: 'Trecho do nome do Pokémon.',
+            schema: { type: 'string', example: 'pika' },
+          },
+        ],
+        responses: {
+          '200': {
+            description: 'Lista de Pokémons que contêm o termo no nome.',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    data: {
+                      type: 'array',
+                      items: { $ref: '#/components/schemas/Pokemon' },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          '400': {
+            description: 'Termo de busca ausente.',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/ErrorResponse' },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/api/v1/pokemons/count': {
+      get: {
+        tags: ['Pokemons'],
+        summary: 'Conta o total de Pokémons do catálogo',
+        responses: {
+          '200': {
+            description: 'Total de Pokémons cadastrados.',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    data: {
+                      type: 'object',
+                      properties: { total: { type: 'integer', example: 3 } },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/api/v1/pokemons/{id}/level': {
+      patch: {
+        tags: ['Pokemons'],
+        summary: 'Atualiza o nível de um Pokémon',
+        parameters: [idParameter],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['level'],
+                properties: {
+                  level: {
+                    type: 'integer',
+                    minimum: 1,
+                    maximum: 100,
+                    example: 36,
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'Nível atualizado com sucesso.',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    message: {
+                      type: 'string',
+                      example: 'Nível do Pokémon atualizado com sucesso!',
+                    },
+                    data: { $ref: '#/components/schemas/Pokemon' },
+                  },
+                },
+              },
+            },
+          },
+          '400': {
+            description: 'Nível inválido (inteiro entre 1 e 100).',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/ErrorResponse' },
+              },
+            },
+          },
+          '404': {
+            description: 'Pokémon não encontrado no catálogo.',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/ErrorResponse' },
+              },
+            },
+          },
+        },
+      },
+    },
     '/api/v1/pokemons/{id}': {
       get: {
         tags: ['Pokemons'],
