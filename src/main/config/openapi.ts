@@ -35,6 +35,7 @@ const pokemonProperties = {
   hp: { type: 'integer', minimum: 0, example: 35 },
   attack: { type: 'integer', minimum: 0, example: 55 },
   defense: { type: 'integer', minimum: 0, example: 40 },
+  level: { type: 'integer', minimum: 1, maximum: 100, example: 5 },
 };
 
 const idParameter = {
@@ -244,6 +245,7 @@ export const openapiDocument = {
       CreatePokemonInput: {
         type: 'object',
         required: ['id', 'name', 'type', 'hp', 'attack', 'defense'],
+        description: 'O campo `level` é opcional (padrão: 1).',
         properties: pokemonProperties,
       },
       UpdatePokemonInput: {
@@ -255,6 +257,7 @@ export const openapiDocument = {
           hp: { type: 'integer', minimum: 0, example: 60 },
           attack: { type: 'integer', minimum: 0, example: 90 },
           defense: { type: 'integer', minimum: 0, example: 55 },
+          level: { type: 'integer', minimum: 1, maximum: 100, example: 36 },
         },
       },
       ErrorResponse: {

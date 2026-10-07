@@ -8,6 +8,7 @@ interface UpdatePokemonDTO {
   hp?: number;
   attack?: number;
   defense?: number;
+  level?: number;
 }
 
 export class UpdatePokemonUseCase {
@@ -27,6 +28,7 @@ export class UpdatePokemonUseCase {
       hp: data.hp ?? existing.hp,
       attack: data.attack ?? existing.attack,
       defense: data.defense ?? existing.defense,
+      level: data.level ?? existing.level,
     });
 
     await this.pokemonRepository.update(updated);

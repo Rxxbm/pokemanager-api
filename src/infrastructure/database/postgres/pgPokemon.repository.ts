@@ -12,17 +12,18 @@ interface PokemonRow {
   hp: number;
   attack: number;
   defense: number;
+  level: number;
 }
 
-const COLUMNS = 'id, name, type, hp, attack, defense';
+const COLUMNS = 'id, name, type, hp, attack, defense, level';
 
 const toEntity = (row: PokemonRow): Pokemon => new Pokemon({ ...row });
 
 export class PgPokemonRepository implements IPokemonRepository {
   async create(pokemon: Pokemon): Promise<void> {
     const query = `
-      INSERT INTO pokemons (id, name, type, hp, attack, defense)
-      VALUES ($1, $2, $3, $4, $5, $6)
+      INSERT INTO pokemons (id, name, type, hp, attack, defense, level)
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
     `;
     await postgresPool.query(query, [
       pokemon.id,
@@ -31,6 +32,7 @@ export class PgPokemonRepository implements IPokemonRepository {
       pokemon.hp,
       pokemon.attack,
       pokemon.defense,
+      pokemon.level,
     ]);
   }
 
@@ -60,7 +62,7 @@ export class PgPokemonRepository implements IPokemonRepository {
   async update(pokemon: Pokemon): Promise<void> {
     const query = `
       UPDATE pokemons
-      SET name = $2, type = $3, hp = $4, attack = $5, defense = $6
+      SET name = $2, type = $3, hp = $4, attack = $5, defense = $6, level = $7
       WHERE id = $1
     `;
     await postgresPool.query(query, [
@@ -70,6 +72,7 @@ export class PgPokemonRepository implements IPokemonRepository {
       pokemon.hp,
       pokemon.attack,
       pokemon.defense,
+      pokemon.level,
     ]);
   }
 

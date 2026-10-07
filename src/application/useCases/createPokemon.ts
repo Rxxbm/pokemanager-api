@@ -9,6 +9,7 @@ interface CreatePokemonDTO {
   hp: number;
   attack: number;
   defense: number;
+  level?: number;
 }
 
 export class CreatePokemonUseCase {
@@ -21,7 +22,7 @@ export class CreatePokemonUseCase {
       throw new AppError('Já existe um Pokémon cadastrado com este ID.', 409);
     }
 
-    const pokemon = new Pokemon(data);
+    const pokemon = new Pokemon({ ...data, level: data.level ?? 1 });
     await this.pokemonRepository.create(pokemon);
     return pokemon;
   }

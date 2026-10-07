@@ -14,6 +14,7 @@ function formatPokemon(pokemon: Pokemon) {
     hp: pokemon.hp,
     attack: pokemon.attack,
     defense: pokemon.defense,
+    level: pokemon.level,
   };
 }
 
@@ -44,7 +45,7 @@ export class PokemonController {
   }
 
   async create(req: Request, res: Response): Promise<Response> {
-    const { id, name, type, hp, attack, defense } = req.body;
+    const { id, name, type, hp, attack, defense, level } = req.body;
 
     const pokemon = await this.createPokemonUseCase.execute({
       id,
@@ -53,6 +54,7 @@ export class PokemonController {
       hp,
       attack,
       defense,
+      level,
     });
 
     return res.status(201).json({
@@ -63,7 +65,7 @@ export class PokemonController {
 
   async update(req: Request, res: Response): Promise<Response> {
     const id = String(req.params.id);
-    const { name, type, hp, attack, defense } = req.body;
+    const { name, type, hp, attack, defense, level } = req.body;
 
     const pokemon = await this.updatePokemonUseCase.execute(id, {
       name,
@@ -71,6 +73,7 @@ export class PokemonController {
       hp,
       attack,
       defense,
+      level,
     });
 
     return res.status(200).json({
