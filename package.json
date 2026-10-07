@@ -4,8 +4,8 @@
   "description": "API RESTful para gerenciamento do catálogo e times de Pokémons — disciplina de Desenvolvimento de APIs Modernas (UFF).",
   "main": "src/main/server.ts",
   "scripts": {
-    "start": "tsx watch src/main/server.ts",
-    "dev": "tsx watch src/main/server.ts",
+    "start": "tsx watch --env-file-if-exists=.env src/main/server.ts",
+    "dev": "tsx watch --env-file-if-exists=.env src/main/server.ts",
     "build": "tsc && tsc-alias",
     "lint": "eslint src --ext .ts",
     "lint:fix": "eslint src --ext .ts --fix",
@@ -17,6 +17,7 @@
   "devDependencies": {
     "@types/express": "^5.0.6",
     "@types/node": "^26.2.0",
+    "@types/pg": "^8.23.1",
     "@types/swagger-ui-express": "^4.1.8",
     "@typescript-eslint/eslint-plugin": "^8.68.0",
     "@typescript-eslint/parser": "^8.68.0",
@@ -30,6 +31,7 @@
   },
   "dependencies": {
     "express": "^5.2.1",
+    "pg": "^8.23.1",
     "swagger-ui-express": "^5.0.1"
   }
 }
