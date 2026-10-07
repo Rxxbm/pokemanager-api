@@ -38,12 +38,27 @@ const pokemonProperties = {
   level: { type: 'integer', minimum: 1, maximum: 100, example: 5 },
 };
 
+const trainerProperties = {
+  id: { type: 'string', format: 'uuid' },
+  name: { type: 'string', example: 'Ash Ketchum' },
+  email: { type: 'string', format: 'email', example: 'ash@pallet.com' },
+  city: { type: 'string', example: 'Pallet Town' },
+};
+
 const idParameter = {
   name: 'id',
   in: 'path',
   required: true,
   description: 'Identificador do Pokémon no catálogo local.',
   schema: { type: 'string', example: '25' },
+};
+
+const trainerIdParameter = {
+  name: 'id',
+  in: 'path',
+  required: true,
+  description: 'Identificador (UUID) do Treinador.',
+  schema: { type: 'string', format: 'uuid' },
 };
 
 export const openapiDocument = {
@@ -61,6 +76,10 @@ export const openapiDocument = {
     {
       name: 'Pokemons',
       description: 'Endpoints de gerenciamento do catálogo local de Pokémons',
+    },
+    {
+      name: 'Trainers',
+      description: 'Endpoints de gerenciamento de Treinadores',
     },
   ],
   paths: {
@@ -362,6 +381,155 @@ export const openapiDocument = {
         },
       },
     },
+    '/api/v1/trainers': {
+      get: {
+        tags: ['Trainers'],
+        summary: 'Lista os Treinadores cadastrados',
+        responses: {
+          '200': {
+            description: 'Lista de Treinadores.',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    data: {
+                      type: 'array',
+                      items: { $ref: '#/components/schemas/Trainer' },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      post: {
+        tags: ['Trainers'],
+        summary: 'Cadastra um novo Treinador',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/CreateTrainerInput' },
+            },
+          },
+        },
+        responses: {
+          '201': {
+            description: 'Treinador cadastrado com sucesso.',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    message: {
+                      type: 'string',
+                      example: 'Treinador cadastrado com sucesso!',
+                    },
+                    data: { $ref: '#/components/schemas/Trainer' },
+                  },
+                },
+              },
+            },
+          },
+          '400': {
+            description: 'Dados inválidos.',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/ErrorResponse' },
+              },
+            },
+          },
+          '409': {
+            description: 'Já existe um Treinador cadastrado com este e-mail.',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/ErrorResponse' },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/api/v1/trainers/{id}': {
+      get: {
+        tags: ['Trainers'],
+        summary: 'Busca um Treinador por ID',
+        parameters: [trainerIdParameter],
+        responses: {
+          '200': {
+            description: 'Treinador encontrado.',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    data: { $ref: '#/components/schemas/Trainer' },
+                  },
+                },
+              },
+            },
+          },
+          '404': {
+            description: 'Treinador não encontrado.',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/ErrorResponse' },
+              },
+            },
+          },
+        },
+      },
+      put: {
+        tags: ['Trainers'],
+        summary: 'Atualiza os dados de um Treinador',
+        parameters: [trainerIdParameter],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/UpdateTrainerInput' },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'Treinador atualizado com sucesso.',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    message: {
+                      type: 'string',
+                      example: 'Treinador atualizado com sucesso!',
+                    },
+                    data: { $ref: '#/components/schemas/Trainer' },
+                  },
+                },
+              },
+            },
+          },
+          '404': {
+            description: 'Treinador não encontrado.',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/ErrorResponse' },
+              },
+            },
+          },
+          '409': {
+            description: 'Já existe um Treinador cadastrado com este e-mail.',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/ErrorResponse' },
+              },
+            },
+          },
+        },
+      },
+    },
   },
   components: {
     schemas: {
@@ -385,6 +553,28 @@ export const openapiDocument = {
           attack: { type: 'integer', minimum: 0, example: 90 },
           defense: { type: 'integer', minimum: 0, example: 55 },
           level: { type: 'integer', minimum: 1, maximum: 100, example: 36 },
+        },
+      },
+      Trainer: {
+        type: 'object',
+        properties: trainerProperties,
+      },
+      CreateTrainerInput: {
+        type: 'object',
+        required: ['name', 'email', 'city'],
+        properties: {
+          name: trainerProperties.name,
+          email: trainerProperties.email,
+          city: trainerProperties.city,
+        },
+      },
+      UpdateTrainerInput: {
+        type: 'object',
+        description: 'Todos os campos são opcionais; envie apenas o que mudar.',
+        properties: {
+          name: trainerProperties.name,
+          email: trainerProperties.email,
+          city: trainerProperties.city,
         },
       },
       ErrorResponse: {
