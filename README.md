@@ -126,6 +126,17 @@ docker compose down            # para tudo (use -v para apagar os volumes)
 
 ---
 
+## 🐘 Persistência com PostgreSQL
+
+Os dados agora são gravados no PostgreSQL (driver nativo `pg` com Connection Pool), via `PgPokemonRepository`,
+que implementa a mesma `IPokemonRepository` do domínio. A tabela `pokemons` é criada automaticamente na primeira
+subida do container a partir de [`db/init.sql`](db/init.sql). O `id` é `VARCHAR` (e não UUID) porque é informado
+pelo cliente, como o número da Pokédex.
+
+> Para recriar o banco do zero (reexecutar o `init.sql`): `docker compose down -v && docker compose up -d`.
+
+---
+
 ## 📖 Documentação dos Endpoints (RESTful)
 
 A documentação interativa completa está acessível via Swagger no navegador em **`/api/docs`**.
