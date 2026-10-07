@@ -12,3 +12,12 @@ CREATE TABLE IF NOT EXISTS pokemons (
 );
 
 CREATE INDEX IF NOT EXISTS idx_pokemons_type ON pokemons (LOWER(type));
+
+-- Tabela de Treinadores (e-mail único: violação gera erro 23505 no Postgres)
+CREATE TABLE IF NOT EXISTS trainers (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name VARCHAR(150) NOT NULL,
+  email VARCHAR(255) NOT NULL UNIQUE,
+  city VARCHAR(100) NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
