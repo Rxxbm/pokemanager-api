@@ -108,6 +108,24 @@ servida diretamente pelo Swagger UI — não há etapa de geração de arquivo.
 
 ---
 
+## 🐳 Executando com Docker
+
+```bash
+cp .env.example .env
+docker compose up -d --build   # sobe api, postgres e pgadmin
+docker compose logs -f api     # acompanha os logs da API
+docker compose down            # para tudo (use -v para apagar os volumes)
+```
+
+| Serviço  | URL / Porta                       |
+| -------- | --------------------------------- |
+| API      | http://localhost:3333             |
+| Swagger  | http://localhost:3333/api/docs    |
+| pgAdmin  | http://localhost:5050             |
+| Postgres | localhost:5432                    |
+
+---
+
 ## 📖 Documentação dos Endpoints (RESTful)
 
 A documentação interativa completa está acessível via Swagger no navegador em **`/api/docs`**.
