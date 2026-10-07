@@ -9,5 +9,8 @@ export interface IPokemonRepository {
   findById(id: string): Promise<Pokemon | null>;
   findAll(filters?: ListPokemonsFilters): Promise<Pokemon[]>;
   update(pokemon: Pokemon): Promise<void>;
+  updateLevel(id: string, newLevel: number): Promise<void>;
+  searchByName(term: string): Promise<Pokemon[]>;
+  count(): Promise<number>;
   delete(id: string): Promise<void>;
 }

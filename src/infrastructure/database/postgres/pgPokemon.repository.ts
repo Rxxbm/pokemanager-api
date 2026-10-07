@@ -76,6 +76,29 @@ export class PgPokemonRepository implements IPokemonRepository {
     ]);
   }
 
+  async updateLevel(id: string, newLevel: number): Promise<void> {
+    await postgresPool.query('UPDATE pokemons SET level = $2 WHERE id = $1', [
+      id,
+      newLevel,
+    ]);
+  }
+
+  async searchByName(term: string): Promise<Pokemon[]> {
+    const result = await postgresPool.query<PokemonRow>(
+      `SELECT ${COLUMNS} FROM pokemons WHERE name ILIKE $1 ORDER BY created_at`,
+      [`%${term}%`],
+    );
+
+    return result.rows.map(toEntity);
+  }
+
+  async count(): Promise<number> {
+    const result = await postgresPool.query<{ total: number }>(
+      'SELECT COUNT(*)::int AS total FROM pokemons',
+    );
+    return result.rows[0].total;
+  }
+
   async delete(id: string): Promise<void> {
     await postgresPool.query('DELETE FROM pokemons WHERE id = $1', [id]);
   }

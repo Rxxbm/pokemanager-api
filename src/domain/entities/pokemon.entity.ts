@@ -43,6 +43,10 @@ export class Pokemon {
     this.props = props;
   }
 
+  toProps(): PokemonProps {
+    return { ...this.props };
+  }
+
   get id() {
     return this.props.id;
   }

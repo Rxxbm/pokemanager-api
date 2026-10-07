@@ -33,6 +33,24 @@ export class InMemoryPokemonRepository implements IPokemonRepository {
     }
   }
 
+  async updateLevel(id: string, newLevel: number): Promise<void> {
+    const pokemon = await this.findById(id);
+    if (!pokemon) return;
+
+    await this.update(new Pokemon({ ...pokemon.toProps(), level: newLevel }));
+  }
+
+  async searchByName(term: string): Promise<Pokemon[]> {
+    const normalized = term.toLowerCase();
+    return this.items.filter((item) =>
+      item.name.toLowerCase().includes(normalized),
+    );
+  }
+
+  async count(): Promise<number> {
+    return this.items.length;
+  }
+
   async delete(id: string): Promise<void> {
     this.items = this.items.filter((item) => item.id !== id);
   }
