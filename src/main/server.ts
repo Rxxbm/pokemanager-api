@@ -16,7 +16,7 @@ app.use('/api/v1/pokemons', pokemonRoutes);
 // 3. Middleware Global de Erros (OBRIGATORIAMENTE NO FINAL)
 app.use(errorHandler);
 
-const PORT = 3333;
+const PORT = Number(process.env.PORT) || 3333;
 
 app.listen(PORT, () => {
   console.log(`🚀 [server]: Servidor rodando em http://localhost:${PORT}`);
