@@ -3,9 +3,9 @@ import { GetTrainerByIdUseCase } from '@application/useCases/getTrainerById';
 import { CreateTrainerUseCase } from '@application/useCases/createTrainer';
 import { UpdateTrainerUseCase } from '@application/useCases/updateTrainer';
 import { TrainerController } from '@infrastructure/http/controllers/trainer.controller';
-import { PgTrainerRepository } from '@infrastructure/database/postgres/pgTrainer.repository';
+import { PrismaTrainerRepository } from '@infrastructure/database/prisma/prismaTrainer.repository';
 
-const trainerRepository = new PgTrainerRepository();
+const trainerRepository = new PrismaTrainerRepository();
 
 export function makeTrainerController(): TrainerController {
   const listTrainersUseCase = new ListTrainersUseCase(trainerRepository);

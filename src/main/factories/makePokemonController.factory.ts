@@ -7,10 +7,10 @@ import { UpdatePokemonLevelUseCase } from '@application/useCases/updatePokemonLe
 import { SearchPokemonsByNameUseCase } from '@application/useCases/searchPokemonsByName';
 import { CountPokemonsUseCase } from '@application/useCases/countPokemons';
 import { PokemonController } from '@infrastructure/http/controllers/pokemon.controller';
-import { PgPokemonRepository } from '@infrastructure/database/postgres/pgPokemon.repository';
+import { PrismaPokemonRepository } from '@infrastructure/database/prisma/prismaPokemon.repository';
 
 // Implementação que se conecta ao PostgreSQL real
-const pokemonRepository = new PgPokemonRepository();
+const pokemonRepository = new PrismaPokemonRepository();
 
 export function makePokemonController(): PokemonController {
   const listPokemonsUseCase = new ListPokemonsUseCase(pokemonRepository);
