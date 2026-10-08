@@ -161,6 +161,38 @@ E-mail de Treinador duplicado retorna `409 Conflict` (violação `23505` no `pg`
 
 ---
 
+## 🛡️ Validação de Entrada com Zod
+
+Os dados são validados na borda HTTP (princípio *Fail-Fast*) pelo middleware genérico
+[`validateRequest`](src/infrastructure/http/middlewares/validateRequest.ts), que aceita schemas para `body`, `query` e `params`.
+Os schemas ficam em `src/infrastructure/http/schemas/` (`pokemon.schemas.ts` e `trainer.schemas.ts`) e os tipos são inferidos com `z.infer`.
+Campos não declarados no schema (ex: `isAdmin`) são descartados, evitando *mass assignment*.
+
+| Recurso      | Regras principais                                                                                                 |
+| ------------ | ----------------------------------------------------------------------------------------------------------------- |
+| Pokémon      | `name` ≥ 2 caracteres; `type` em enum (`FIRE`, `WATER`, `GRASS`, `ELECTRIC`, `POISON`, `FLYING`, ...); `level` inteiro 1–100; `trainerId` UUID opcional |
+| Treinador    | `name` ≥ 3 (com `trim`); `email` válido em minúsculas; `city` ≥ 2                                                  |
+| Listagem     | `GET /pokemons?type=&minLevel=&maxLevel=` — níveis chegam como string e são convertidos (padrão 1 e 100)          |
+
+Exemplo de resposta para `POST /api/v1/pokemons` com `{ "name": "P", "type": "DIGIMON", "level": 999 }`:
+
+```json
+{
+  "status": "error",
+  "statusCode": 400,
+  "message": "Dados de entrada inválidos",
+  "details": [
+    { "field": "name", "message": "O nome deve ter no mínimo 2 caracteres" },
+    { "field": "type", "message": "Invalid enum value. Expected 'FIRE' | 'WATER' | ..." },
+    { "field": "level", "message": "O nível deve ser no máximo 100" }
+  ]
+}
+```
+
+> Regras que dependem do banco (ex: e-mail já cadastrado, `trainerId` existente) **não** são do Zod: ficam nos casos de uso / domínio.
+
+---
+
 ## 📖 Documentação dos Endpoints (RESTful)
 
 A documentação interativa completa está acessível via Swagger no navegador em **`/api/docs`**.
