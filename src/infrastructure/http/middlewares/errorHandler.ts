@@ -14,6 +14,7 @@ export function errorHandler(
       status: 'error',
       statusCode: error.statusCode,
       message: error.message,
+      ...(error.details !== undefined && { details: error.details }),
     });
   }
 
