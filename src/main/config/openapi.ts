@@ -7,35 +7,24 @@
  * seleção (enum) na aba "Try it out".
  */
 
-export const POKEMON_TYPES = [
-  'Normal',
-  'Fire',
-  'Water',
-  'Electric',
-  'Grass',
-  'Ice',
-  'Fighting',
-  'Poison',
-  'Ground',
-  'Flying',
-  'Psychic',
-  'Bug',
-  'Rock',
-  'Ghost',
-  'Dragon',
-  'Dark',
-  'Steel',
-  'Fairy',
-] as const;
+import { POKEMON_TYPES } from '@infrastructure/http/schemas/pokemon.schemas';
+
+export { POKEMON_TYPES };
 
 const pokemonProperties = {
   id: { type: 'string', example: '25' },
   name: { type: 'string', example: 'Pikachu' },
-  type: { type: 'string', enum: POKEMON_TYPES, example: 'Electric' },
+  type: { type: 'string', enum: POKEMON_TYPES, example: 'ELECTRIC' },
   hp: { type: 'integer', minimum: 0, example: 35 },
   attack: { type: 'integer', minimum: 0, example: 55 },
   defense: { type: 'integer', minimum: 0, example: 40 },
   level: { type: 'integer', minimum: 1, maximum: 100, example: 5 },
+  trainerId: {
+    type: 'string',
+    format: 'uuid',
+    nullable: true,
+    description: 'Treinador dono do Pokémon (opcional).',
+  },
 };
 
 const trainerProperties = {
@@ -97,6 +86,20 @@ export const openapiDocument = {
             required: false,
             description: 'Filtra os Pokémons pelo tipo elemental.',
             schema: { type: 'string', enum: POKEMON_TYPES },
+          },
+          {
+            name: 'minLevel',
+            in: 'query',
+            required: false,
+            description: 'Nível mínimo (inteiro de 1 a 100). Padrão: 1.',
+            schema: { type: 'integer', minimum: 1, maximum: 100, default: 1 },
+          },
+          {
+            name: 'maxLevel',
+            in: 'query',
+            required: false,
+            description: 'Nível máximo (inteiro de 1 a 100). Padrão: 100.',
+            schema: { type: 'integer', minimum: 1, maximum: 100, default: 100 },
           },
         ],
         responses: {
@@ -539,8 +542,9 @@ export const openapiDocument = {
       },
       CreatePokemonInput: {
         type: 'object',
-        required: ['id', 'name', 'type', 'hp', 'attack', 'defense'],
-        description: 'O campo `level` é opcional (padrão: 1).',
+        required: ['id', 'name', 'type', 'hp', 'attack', 'defense', 'level'],
+        description:
+          'O campo `trainerId` é opcional (UUID de um Treinador existente).',
         properties: pokemonProperties,
       },
       UpdatePokemonInput: {
@@ -548,11 +552,12 @@ export const openapiDocument = {
         description: 'Todos os campos são opcionais; envie apenas o que mudar.',
         properties: {
           name: { type: 'string', example: 'Raichu' },
-          type: { type: 'string', enum: POKEMON_TYPES, example: 'Electric' },
+          type: { type: 'string', enum: POKEMON_TYPES, example: 'ELECTRIC' },
           hp: { type: 'integer', minimum: 0, example: 60 },
           attack: { type: 'integer', minimum: 0, example: 90 },
           defense: { type: 'integer', minimum: 0, example: 55 },
           level: { type: 'integer', minimum: 1, maximum: 100, example: 36 },
+          trainerId: pokemonProperties.trainerId,
         },
       },
       Trainer: {
@@ -585,6 +590,20 @@ export const openapiDocument = {
           message: {
             type: 'string',
             example: 'Pokémon não encontrado no catálogo.',
+          },
+          details: {
+            type: 'array',
+            description: 'Presente em erros de validação (400) do Zod.',
+            items: {
+              type: 'object',
+              properties: {
+                field: { type: 'string', example: 'level' },
+                message: {
+                  type: 'string',
+                  example: 'O nível deve ser no máximo 100',
+                },
+              },
+            },
           },
         },
       },
