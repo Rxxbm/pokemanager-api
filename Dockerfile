@@ -5,6 +5,9 @@ FROM node:26-alpine AS builder
 
 WORKDIR /usr/src/app
 
+# O Prisma precisa do OpenSSL no Alpine
+RUN apk add --no-cache openssl
+
 COPY package*.json ./
 
 # Instala todas as dependências (incluindo devDependencies para compilar)
@@ -12,7 +15,8 @@ RUN npm ci
 
 COPY . .
 
-# Compila o TypeScript e resolve os aliases (tsc + tsc-alias)
+# Gera o Prisma Client, compila o TypeScript e resolve os aliases
+# (prisma generate + tsc + tsc-alias)
 RUN npm run build
 
 # ==========================================
@@ -24,10 +28,16 @@ WORKDIR /usr/src/app
 
 ENV NODE_ENV=production
 
-COPY package*.json ./
+RUN apk add --no-cache openssl
 
-# Instala APENAS as dependências de produção
+COPY package*.json ./
+COPY prisma ./prisma
+
+# Instala APENAS as dependências de produção (prisma CLI incluso para o migrate deploy)
 RUN npm ci --omit=dev
+
+# Gera o Prisma Client no ambiente de execução
+RUN npx prisma generate
 
 # Copia a pasta /dist gerada no estágio de build
 COPY --from=builder /usr/src/app/dist ./dist

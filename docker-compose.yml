@@ -6,6 +6,8 @@ services:
       dockerfile: Dockerfile
     container_name: pokemanager_api
     restart: unless-stopped
+    # Aplica as migrations do Prisma antes de subir o servidor
+    command: sh -c "npx prisma migrate deploy && node dist/src/main/server.js"
     ports:
       - '${PORT:-3333}:3333'
     environment:
@@ -31,7 +33,6 @@ services:
       - '${POSTGRES_PORT:-5432}:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}']
       interval: 5s
