@@ -126,14 +126,38 @@ docker compose down            # para tudo (use -v para apagar os volumes)
 
 ---
 
-## 🐘 Persistência com PostgreSQL
+## 🐘 Persistência com PostgreSQL + Prisma ORM
 
-Os dados agora são gravados no PostgreSQL (driver nativo `pg` com Connection Pool), via `PgPokemonRepository`,
-que implementa a mesma `IPokemonRepository` do domínio. A tabela `pokemons` é criada automaticamente na primeira
-subida do container a partir de [`db/init.sql`](db/init.sql). O `id` é `VARCHAR` (e não UUID) porque é informado
-pelo cliente, como o número da Pokédex.
+Os dados são gravados no PostgreSQL. Existem duas implementações de repositório, ambas sobre as mesmas interfaces do domínio
+(`IPokemonRepository` e `ITrainerRepository`):
 
-> Para recriar o banco do zero (reexecutar o `init.sql`): `docker compose down -v && docker compose up -d`.
+| Implementação                                  | Local                                   | Uso                                 |
+| ---------------------------------------------- | --------------------------------------- | ----------------------------------- |
+| Driver nativo `pg` (SQL puro, parâmetros `$1`) | `src/infrastructure/database/postgres/` | Aula 8 (referência)                 |
+| **Prisma Client**                              | `src/infrastructure/database/prisma/`   | **Ativa** (injetada nas factories)  |
+
+O schema fica em [`prisma/schema.prisma`](prisma/schema.prisma) (modelos `Pokemon` e `Trainer`) e as migrations versionadas em
+`prisma/migrations/`. No Docker, a API executa `npx prisma migrate deploy` antes de iniciar o servidor.
+
+```bash
+npx prisma migrate dev --name <nome>   # cria/aplica uma migration (dev)
+npx prisma generate                    # regenera o Prisma Client
+npx prisma studio                      # painel gráfico em http://localhost:5555
+npx prisma migrate reset               # recria o banco do zero
+```
+
+> Rodando fora do Docker, suba apenas o banco (`docker compose up -d postgres`) e use `localhost` no `DATABASE_URL` do `.env`.
+
+### Rotas adicionadas
+
+| Método  | Rota                              | Descrição                                          |
+| ------- | --------------------------------- | -------------------------------------------------- |
+| `PATCH` | `/api/v1/pokemons/:id/level`      | Atualiza o nível (`{ "level": 36 }`, de 1 a 100)   |
+| `GET`   | `/api/v1/pokemons/search?name=`   | Busca parcial por nome, ignorando maiúsculas       |
+| `GET`   | `/api/v1/pokemons/count`          | Total de Pokémons no catálogo                      |
+| `*`     | `/api/v1/trainers`                | Cadastro, listagem, busca e atualização de Treinadores |
+
+E-mail de Treinador duplicado retorna `409 Conflict` (violação `23505` no `pg` / `P2002` no Prisma, convertida em `AppError`).
 
 ---
 
