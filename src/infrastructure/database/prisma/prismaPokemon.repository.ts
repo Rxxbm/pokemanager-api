@@ -15,6 +15,7 @@ const toEntity = (row: PokemonModel): Pokemon =>
     attack: row.attack,
     defense: row.defense,
     level: row.level,
+    trainerId: row.trainerId,
   });
 
 export class PrismaPokemonRepository implements IPokemonRepository {
@@ -29,9 +30,12 @@ export class PrismaPokemonRepository implements IPokemonRepository {
 
   async findAll(filters?: ListPokemonsFilters): Promise<Pokemon[]> {
     const rows = await prisma.pokemon.findMany({
-      where: filters?.type
-        ? { type: { equals: filters.type, mode: 'insensitive' } }
-        : undefined,
+      where: {
+        ...(filters?.type && {
+          type: { equals: filters.type, mode: 'insensitive' as const },
+        }),
+        level: { gte: filters?.minLevel, lte: filters?.maxLevel },
+      },
       orderBy: { createdAt: 'asc' },
     });
 

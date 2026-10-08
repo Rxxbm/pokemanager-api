@@ -13,17 +13,19 @@ interface PokemonRow {
   attack: number;
   defense: number;
   level: number;
+  trainer_id: string | null;
 }
 
-const COLUMNS = 'id, name, type, hp, attack, defense, level';
+const COLUMNS = 'id, name, type, hp, attack, defense, level, trainer_id';
 
-const toEntity = (row: PokemonRow): Pokemon => new Pokemon({ ...row });
+const toEntity = ({ trainer_id, ...row }: PokemonRow): Pokemon =>
+  new Pokemon({ ...row, trainerId: trainer_id });
 
 export class PgPokemonRepository implements IPokemonRepository {
   async create(pokemon: Pokemon): Promise<void> {
     const query = `
-      INSERT INTO pokemons (id, name, type, hp, attack, defense, level)
-      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      INSERT INTO pokemons (id, name, type, hp, attack, defense, level, trainer_id)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
     `;
     await postgresPool.query(query, [
       pokemon.id,
@@ -33,6 +35,7 @@ export class PgPokemonRepository implements IPokemonRepository {
       pokemon.attack,
       pokemon.defense,
       pokemon.level,
+      pokemon.trainerId,
     ]);
   }
 
@@ -47,14 +50,13 @@ export class PgPokemonRepository implements IPokemonRepository {
   }
 
   async findAll(filters?: ListPokemonsFilters): Promise<Pokemon[]> {
-    const result = filters?.type
-      ? await postgresPool.query<PokemonRow>(
-          `SELECT ${COLUMNS} FROM pokemons WHERE LOWER(type) = LOWER($1) ORDER BY created_at`,
-          [filters.type],
-        )
-      : await postgresPool.query<PokemonRow>(
-          `SELECT ${COLUMNS} FROM pokemons ORDER BY created_at`,
-        );
+    const result = await postgresPool.query<PokemonRow>(
+      `SELECT ${COLUMNS} FROM pokemons
+       WHERE ($1::text IS NULL OR LOWER(type) = LOWER($1))
+         AND level >= $2 AND level <= $3
+       ORDER BY created_at`,
+      [filters?.type ?? null, filters?.minLevel ?? 1, filters?.maxLevel ?? 100],
+    );
 
     return result.rows.map(toEntity);
   }
@@ -62,7 +64,7 @@ export class PgPokemonRepository implements IPokemonRepository {
   async update(pokemon: Pokemon): Promise<void> {
     const query = `
       UPDATE pokemons
-      SET name = $2, type = $3, hp = $4, attack = $5, defense = $6, level = $7
+      SET name = $2, type = $3, hp = $4, attack = $5, defense = $6, level = $7, trainer_id = $8
       WHERE id = $1
     `;
     await postgresPool.query(query, [
@@ -73,6 +75,7 @@ export class PgPokemonRepository implements IPokemonRepository {
       pokemon.attack,
       pokemon.defense,
       pokemon.level,
+      pokemon.trainerId,
     ]);
   }
 

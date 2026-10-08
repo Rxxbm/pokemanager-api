@@ -11,6 +11,7 @@ export interface PokemonProps {
   attack: number;
   defense: number;
   level: number;
+  trainerId?: string | null;
 }
 
 export class Pokemon {
@@ -67,5 +68,8 @@ export class Pokemon {
   }
   get level() {
     return this.props.level;
+  }
+  get trainerId() {
+    return this.props.trainerId ?? null;
   }
 }

@@ -2,6 +2,8 @@ import { Pokemon } from '@domain/entities/pokemon.entity';
 
 export interface ListPokemonsFilters {
   type?: string;
+  minLevel?: number;
+  maxLevel?: number;
 }
 
 export interface IPokemonRepository {

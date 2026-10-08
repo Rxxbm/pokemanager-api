@@ -6,17 +6,25 @@ import { DeletePokemonUseCase } from '@application/useCases/deletePokemon';
 import { UpdatePokemonLevelUseCase } from '@application/useCases/updatePokemonLevel';
 import { SearchPokemonsByNameUseCase } from '@application/useCases/searchPokemonsByName';
 import { CountPokemonsUseCase } from '@application/useCases/countPokemons';
+import { PrismaTrainerRepository } from '@infrastructure/database/prisma/prismaTrainer.repository';
 import { PokemonController } from '@infrastructure/http/controllers/pokemon.controller';
 import { PrismaPokemonRepository } from '@infrastructure/database/prisma/prismaPokemon.repository';
 
 // Implementação que se conecta ao PostgreSQL real
 const pokemonRepository = new PrismaPokemonRepository();
+const trainerRepository = new PrismaTrainerRepository();
 
 export function makePokemonController(): PokemonController {
   const listPokemonsUseCase = new ListPokemonsUseCase(pokemonRepository);
   const getPokemonByIdUseCase = new GetPokemonByIdUseCase(pokemonRepository);
-  const createPokemonUseCase = new CreatePokemonUseCase(pokemonRepository);
-  const updatePokemonUseCase = new UpdatePokemonUseCase(pokemonRepository);
+  const createPokemonUseCase = new CreatePokemonUseCase(
+    pokemonRepository,
+    trainerRepository,
+  );
+  const updatePokemonUseCase = new UpdatePokemonUseCase(
+    pokemonRepository,
+    trainerRepository,
+  );
   const deletePokemonUseCase = new DeletePokemonUseCase(pokemonRepository);
   const updatePokemonLevelUseCase = new UpdatePokemonLevelUseCase(
     pokemonRepository,
