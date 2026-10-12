@@ -14,13 +14,23 @@ export function errorHandler(
       status: 'error',
       statusCode: error.statusCode,
       message: error.message,
+      ...(error.details !== undefined && { details: error.details }),
     });
   }
 
-  // 2. Log interno para erros não mapeados (Crashes/Bugs de runtime)
+  // 2. JSON malformado no corpo da requisição (erro do express.json)
+  if (error instanceof SyntaxError && 'body' in error) {
+    return res.status(400).json({
+      status: 'error',
+      statusCode: 400,
+      message: 'JSON inválido no corpo da requisição.',
+    });
+  }
+
+  // 3. Log interno para erros não mapeados (Crashes/Bugs de runtime)
   console.error('💥 [Uncaught Exception]:', error);
 
-  // 3. Resposta genérica para o cliente em caso de erro 500
+  // 4. Resposta genérica para o cliente em caso de erro 500
   return res.status(500).json({
     status: 'error',
     statusCode: 500,

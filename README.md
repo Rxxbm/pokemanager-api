@@ -108,6 +108,91 @@ servida diretamente pelo Swagger UI — não há etapa de geração de arquivo.
 
 ---
 
+## 🐳 Executando com Docker
+
+```bash
+cp .env.example .env
+docker compose up -d --build   # sobe api, postgres e pgadmin
+docker compose logs -f api     # acompanha os logs da API
+docker compose down            # para tudo (use -v para apagar os volumes)
+```
+
+| Serviço  | URL / Porta                       |
+| -------- | --------------------------------- |
+| API      | http://localhost:3333             |
+| Swagger  | http://localhost:3333/api/docs    |
+| pgAdmin  | http://localhost:5050             |
+| Postgres | localhost:5432                    |
+
+---
+
+## 🐘 Persistência com PostgreSQL + Prisma ORM
+
+Os dados são gravados no PostgreSQL. Existem duas implementações de repositório, ambas sobre as mesmas interfaces do domínio
+(`IPokemonRepository` e `ITrainerRepository`):
+
+| Implementação                                  | Local                                   | Uso                                 |
+| ---------------------------------------------- | --------------------------------------- | ----------------------------------- |
+| Driver nativo `pg` (SQL puro, parâmetros `$1`) | `src/infrastructure/database/postgres/` | Aula 8 (referência)                 |
+| **Prisma Client**                              | `src/infrastructure/database/prisma/`   | **Ativa** (injetada nas factories)  |
+
+O schema fica em [`prisma/schema.prisma`](prisma/schema.prisma) (modelos `Pokemon` e `Trainer`) e as migrations versionadas em
+`prisma/migrations/`. No Docker, a API executa `npx prisma migrate deploy` antes de iniciar o servidor.
+
+```bash
+npx prisma migrate dev --name <nome>   # cria/aplica uma migration (dev)
+npx prisma generate                    # regenera o Prisma Client
+npx prisma studio                      # painel gráfico em http://localhost:5555
+npx prisma migrate reset               # recria o banco do zero
+```
+
+> Rodando fora do Docker, suba apenas o banco (`docker compose up -d postgres`) e use `localhost` no `DATABASE_URL` do `.env`.
+
+### Rotas adicionadas
+
+| Método  | Rota                              | Descrição                                          |
+| ------- | --------------------------------- | -------------------------------------------------- |
+| `PATCH` | `/api/v1/pokemons/:id/level`      | Atualiza o nível (`{ "level": 36 }`, de 1 a 100)   |
+| `GET`   | `/api/v1/pokemons/search?name=`   | Busca parcial por nome, ignorando maiúsculas       |
+| `GET`   | `/api/v1/pokemons/count`          | Total de Pokémons no catálogo                      |
+| `*`     | `/api/v1/trainers`                | Cadastro, listagem, busca e atualização de Treinadores |
+
+E-mail de Treinador duplicado retorna `409 Conflict` (violação `23505` no `pg` / `P2002` no Prisma, convertida em `AppError`).
+
+---
+
+## 🛡️ Validação de Entrada com Zod
+
+Os dados são validados na borda HTTP (princípio *Fail-Fast*) pelo middleware genérico
+[`validateRequest`](src/infrastructure/http/middlewares/validateRequest.ts), que aceita schemas para `body`, `query` e `params`.
+Os schemas ficam em `src/infrastructure/http/schemas/` (`pokemon.schemas.ts` e `trainer.schemas.ts`) e os tipos são inferidos com `z.infer`.
+Campos não declarados no schema (ex: `isAdmin`) são descartados, evitando *mass assignment*.
+
+| Recurso      | Regras principais                                                                                                 |
+| ------------ | ----------------------------------------------------------------------------------------------------------------- |
+| Pokémon      | `name` ≥ 2 caracteres; `type` em enum (`FIRE`, `WATER`, `GRASS`, `ELECTRIC`, `POISON`, `FLYING`, ...); `level` inteiro 1–100; `trainerId` UUID opcional |
+| Treinador    | `name` ≥ 3 (com `trim`); `email` válido em minúsculas; `city` ≥ 2                                                  |
+| Listagem     | `GET /pokemons?type=&minLevel=&maxLevel=` — níveis chegam como string e são convertidos (padrão 1 e 100)          |
+
+Exemplo de resposta para `POST /api/v1/pokemons` com `{ "name": "P", "type": "DIGIMON", "level": 999 }`:
+
+```json
+{
+  "status": "error",
+  "statusCode": 400,
+  "message": "Dados de entrada inválidos",
+  "details": [
+    { "field": "name", "message": "O nome deve ter no mínimo 2 caracteres" },
+    { "field": "type", "message": "Invalid enum value. Expected 'FIRE' | 'WATER' | ..." },
+    { "field": "level", "message": "O nível deve ser no máximo 100" }
+  ]
+}
+```
+
+> Regras que dependem do banco (ex: e-mail já cadastrado, `trainerId` existente) **não** são do Zod: ficam nos casos de uso / domínio.
+
+---
+
 ## 📖 Documentação dos Endpoints (RESTful)
 
 A documentação interativa completa está acessível via Swagger no navegador em **`/api/docs`**.

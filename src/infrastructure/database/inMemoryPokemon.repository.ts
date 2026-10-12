@@ -1,4 +1,4 @@
-import { Pokemon } from '@domain/entities/pokemon.entity';
+import { Pokemon, MAX_LEVEL, MIN_LEVEL } from '@domain/entities/pokemon.entity';
 import {
   IPokemonRepository,
   ListPokemonsFilters,
@@ -18,12 +18,16 @@ export class InMemoryPokemonRepository implements IPokemonRepository {
   }
 
   async findAll(filters?: ListPokemonsFilters): Promise<Pokemon[]> {
-    if (filters?.type) {
-      const type = filters.type.toLowerCase();
-      return this.items.filter((item) => item.type.toLowerCase() === type);
-    }
+    const type = filters?.type?.toLowerCase();
+    const minLevel = filters?.minLevel ?? MIN_LEVEL;
+    const maxLevel = filters?.maxLevel ?? MAX_LEVEL;
 
-    return this.items;
+    return this.items.filter(
+      (item) =>
+        (!type || item.type.toLowerCase() === type) &&
+        item.level >= minLevel &&
+        item.level <= maxLevel,
+    );
   }
 
   async update(pokemon: Pokemon): Promise<void> {
@@ -31,6 +35,24 @@ export class InMemoryPokemonRepository implements IPokemonRepository {
     if (index >= 0) {
       this.items[index] = pokemon;
     }
+  }
+
+  async updateLevel(id: string, newLevel: number): Promise<void> {
+    const pokemon = await this.findById(id);
+    if (!pokemon) return;
+
+    await this.update(new Pokemon({ ...pokemon.toProps(), level: newLevel }));
+  }
+
+  async searchByName(term: string): Promise<Pokemon[]> {
+    const normalized = term.toLowerCase();
+    return this.items.filter((item) =>
+      item.name.toLowerCase().includes(normalized),
+    );
+  }
+
+  async count(): Promise<number> {
+    return this.items.length;
   }
 
   async delete(id: string): Promise<void> {

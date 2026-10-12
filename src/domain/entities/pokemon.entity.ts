@@ -1,5 +1,8 @@
 import { AppError } from '@domain/errors/app.error';
 
+export const MIN_LEVEL = 1;
+export const MAX_LEVEL = 100;
+
 export interface PokemonProps {
   id: string;
   name: string;
@@ -7,6 +10,8 @@ export interface PokemonProps {
   hp: number;
   attack: number;
   defense: number;
+  level: number;
+  trainerId?: string | null;
 }
 
 export class Pokemon {
@@ -25,7 +30,22 @@ export class Pokemon {
       throw new AppError('Atributos de batalha não podem ser negativos.', 400);
     }
 
+    if (
+      !Number.isInteger(props.level) ||
+      props.level < MIN_LEVEL ||
+      props.level > MAX_LEVEL
+    ) {
+      throw new AppError(
+        `O nível deve ser um inteiro entre ${MIN_LEVEL} e ${MAX_LEVEL}.`,
+        400,
+      );
+    }
+
     this.props = props;
+  }
+
+  toProps(): PokemonProps {
+    return { ...this.props };
   }
 
   get id() {
@@ -45,5 +65,11 @@ export class Pokemon {
   }
   get defense() {
     return this.props.defense;
+  }
+  get level() {
+    return this.props.level;
+  }
+  get trainerId() {
+    return this.props.trainerId ?? null;
   }
 }
