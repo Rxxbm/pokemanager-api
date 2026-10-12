@@ -32,6 +32,27 @@ model Trainer {
   city      String   @db.VarChar(100)
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
   pokemons  Pokemon[]
+  captures  Capture[]
 
   @@map("trainers")
+}
+
+// Pokémons capturados por um treinador (dados vindos da PokéAPI)
+model Capture {
+  id            String   @id @default(uuid()) @db.Uuid
+  trainerId     String   @map("trainer_id") @db.Uuid
+  trainer       Trainer  @relation(fields: [trainerId], references: [id], onDelete: Cascade)
+  pokedexNumber Int      @map("pokedex_number")
+  name          String   @db.VarChar(100)
+  types         String[] @db.VarChar(20)
+  imageUrl      String?  @map("image_url") @db.VarChar(500)
+  hp            Int
+  attack        Int
+  defense       Int
+  speed         Int
+  active        Boolean  @default(true)
+  capturedAt    DateTime @default(now()) @map("captured_at") @db.Timestamptz()
+
+  @@index([trainerId, active])
+  @@map("captures")
 }
