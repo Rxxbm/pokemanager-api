@@ -10,7 +10,7 @@ API RESTful para gerenciamento do catálogo e times de Pokémons desenvolvida na
 
 > Universidade Federal Fluminense — Instituto de Ciência e Tecnologia (ICT) — Departamento de Ciência da Computação (RCM)
 
-Este repositório contempla a **Entrega 1 (Módulo 1)**, focada no desacoplamento de código via Clean Architecture, repositório em memória (In-Memory), documentação interativa com Swagger e tratamento global de erros.
+Este repositório contempla a **Entrega 1 (Módulo 1)**, focada no desacoplamento de código via Clean Architecture, repositório em memória (In-Memory), documentação interativa com Swagger e tratamento global de erros, e a **Entrega 2 (Módulo 2)**, com persistência em PostgreSQL via Prisma, validação com Zod e integração com a [PokéAPI](https://pokeapi.co).
 
 ---
 
@@ -122,7 +122,7 @@ docker compose down            # para tudo (use -v para apagar os volumes)
 | API      | http://localhost:3333             |
 | Swagger  | http://localhost:3333/api/docs    |
 | pgAdmin  | http://localhost:5050             |
-| Postgres | localhost:5432                    |
+| Postgres | localhost:`${POSTGRES_PORT}` (padrão 5432) |
 
 ---
 
@@ -190,6 +190,37 @@ Exemplo de resposta para `POST /api/v1/pokemons` com `{ "name": "P", "type": "DI
 ```
 
 > Regras que dependem do banco (ex: e-mail já cadastrado, `trainerId` existente) **não** são do Zod: ficam nos casos de uso / domínio.
+
+---
+
+## 🌐 Integração com a PokéAPI (Entrega 2)
+
+O contrato `IPokeApiGateway` fica no domínio (`src/domain/providers/pokeApi.gateway.ts`) e a implementação com `fetch` nativo
+em [`src/infrastructure/providers/fetchPokeApi.gateway.ts`](src/infrastructure/providers/fetchPokeApi.gateway.ts)
+(timeout de 5s, 404 vira `null`, falhas de rede viram `502`/`504`). A URL base vem de `POKEAPI_BASE_URL`.
+
+| Método | Rota                                       | Descrição                                                                 | Sucesso |
+| ------ | ------------------------------------------ | ------------------------------------------------------------------------- | ------- |
+| `GET`  | `/api/v1/pokedex/search?name=pikachu`      | Consulta direto na PokéAPI e retorna o DTO formatado (nada é salvo)       | `200`   |
+| `POST` | `/api/v1/trainers`                         | Cadastra um Treinador no banco                                            | `201`   |
+| `POST` | `/api/v1/trainers/:trainerId/captures`     | Captura: `{ "pokemonName": "pikachu" }` → busca na PokéAPI e salva        | `201`   |
+| `GET`  | `/api/v1/trainers/:trainerId/team`         | Lista o time ativo do Treinador                                           | `200`   |
+
+**Regra de negócio:** o Treinador pode ter no máximo **6** Pokémons no time ativo (`MAX_TEAM_SIZE`). A 7ª captura retorna
+`422` (`TeamFullError`). A regra é validada **antes** de chamar a PokéAPI. As capturas ficam na tabela `captures`
+(modelo `Capture`, com `ON DELETE CASCADE` para o Treinador).
+
+### Exceções de domínio
+
+Em `src/domain/errors/domain.errors.ts`, todas estendem `AppError` e são tratadas pelo middleware global:
+
+| Exceção                | Status | Uso                                          |
+| ---------------------- | ------ | -------------------------------------------- |
+| `NotFoundError`        | `404`  | Treinador ou Pokémon inexistente             |
+| `ConflictError`        | `409`  | Conflito de dados                            |
+| `BusinessRuleError`    | `422`  | Regra de negócio violada                     |
+| `TeamFullError`        | `422`  | Time ativo já tem 6 Pokémons                 |
+| `ExternalServiceError` | `502`/`504` | PokéAPI fora do ar / timeout            |
 
 ---
 
@@ -303,6 +334,17 @@ garantindo respostas estruturadas e previsíveis:
 - [x] Filtro por tipo via `req.query` (`?type=`)
 - [x] Rota `/api/docs` com Swagger / OpenAPI 3.0
 - [x] Tratamento global de erros com `AppError`
+
+## ✅ Checklist da Entrega 2
+
+- [x] `PrismaPokemonRepository` (e `PrismaTrainerRepository` / `PrismaCaptureRepository`) substituindo o InMemory sem alterar o domínio
+- [x] Interface `IPokeApiGateway` + implementação com `fetch` em `infrastructure/providers/`
+- [x] `GET /api/v1/pokedex/search?name=` consultando a PokéAPI
+- [x] `POST /api/v1/trainers`
+- [x] `POST /api/v1/trainers/:trainerId/captures` com limite de 6 Pokémons no time ativo
+- [x] `GET /api/v1/trainers/:trainerId/team`
+- [x] Validação de `body`, `query` e `params` com Zod em todas as rotas
+- [x] Middleware global de erros + exceções customizadas do domínio
 
 ---
 
