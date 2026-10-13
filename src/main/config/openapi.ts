@@ -42,6 +42,28 @@ const idParameter = {
   schema: { type: 'string', example: '25' },
 };
 
+const trainerIdPathParameter = {
+  name: 'trainerId',
+  in: 'path',
+  required: true,
+  description: 'Identificador (UUID) do Treinador.',
+  schema: { type: 'string', format: 'uuid' },
+};
+
+const errorContent = (example?: object) => ({
+  'application/json': {
+    schema: { $ref: '#/components/schemas/ErrorResponse' },
+    ...(example && { example }),
+  },
+});
+
+const pokemonStatsProperties = {
+  hp: { type: 'integer', example: 35 },
+  attack: { type: 'integer', example: 55 },
+  defense: { type: 'integer', example: 40 },
+  speed: { type: 'integer', example: 90 },
+};
+
 const trainerIdParameter = {
   name: 'id',
   in: 'path',
@@ -53,11 +75,11 @@ const trainerIdParameter = {
 export const openapiDocument = {
   openapi: '3.0.0',
   info: {
-    version: '1.0.0',
+    version: '2.0.0',
     title: 'PokéManager API',
     description:
-      'API RESTful para gerenciamento do catálogo local de Pokémons — Módulo 1 ' +
-      '(Clean Architecture + Repositório In-Memory). ' +
+      'API RESTful para gerenciamento do catálogo e times de Pokémons — Módulo 2 ' +
+      '(PostgreSQL + Prisma, validação com Zod e integração com a PokéAPI). ' +
       'Disciplina de Desenvolvimento de APIs Modernas (UFF / ICT / RCM).',
   },
   servers: [{ url: 'http://localhost:3333', description: 'Servidor local' }],
@@ -69,6 +91,15 @@ export const openapiDocument = {
     {
       name: 'Trainers',
       description: 'Endpoints de gerenciamento de Treinadores',
+    },
+    {
+      name: 'Pokedex',
+      description: 'Consulta direta à PokéAPI oficial (https://pokeapi.co)',
+    },
+    {
+      name: 'Captures',
+      description:
+        'Captura de Pokémons (dados da PokéAPI) e time ativo do Treinador',
     },
   ],
   paths: {
@@ -533,6 +564,148 @@ export const openapiDocument = {
         },
       },
     },
+    '/api/v1/pokedex/search': {
+      get: {
+        tags: ['Pokedex'],
+        summary: 'Consulta um Pokémon direto na PokéAPI oficial',
+        description:
+          'Busca o Pokémon pelo nome exato na PokéAPI e retorna um DTO ' +
+          'formatado (tipos, imagem oficial, altura/peso e atributos base). ' +
+          'Nada é gravado no banco.',
+        parameters: [
+          {
+            name: 'name',
+            in: 'query',
+            required: true,
+            description:
+              'Nome do Pokémon na PokéAPI (ignora maiúsculas). Ex: pikachu, mr-mime.',
+            schema: { type: 'string', example: 'pikachu' },
+          },
+        ],
+        responses: {
+          '200': {
+            description: 'Pokémon encontrado na PokéAPI.',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    data: { $ref: '#/components/schemas/PokedexPokemon' },
+                  },
+                },
+              },
+            },
+          },
+          '400': {
+            description: 'Parâmetro `name` ausente ou inválido (Zod).',
+            content: errorContent(),
+          },
+          '404': {
+            description: 'Pokémon não existe na PokéAPI.',
+            content: errorContent({
+              status: 'error',
+              statusCode: 404,
+              message: 'Pokémon "digimon" não encontrado na PokéAPI.',
+            }),
+          },
+          '502': {
+            description: 'Falha ao se comunicar com a PokéAPI.',
+            content: errorContent(),
+          },
+        },
+      },
+    },
+    '/api/v1/trainers/{trainerId}/captures': {
+      post: {
+        tags: ['Captures'],
+        summary: 'Captura um Pokémon para o Treinador',
+        description:
+          'Consulta a PokéAPI (imagem, atributos base e tipos), valida a regra ' +
+          'de negócio (máximo de **6** Pokémons no time ativo) e salva a ' +
+          'captura no banco associada ao Treinador.',
+        parameters: [trainerIdPathParameter],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/CapturePokemonInput' },
+            },
+          },
+        },
+        responses: {
+          '201': {
+            description: 'Pokémon capturado com sucesso.',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    message: {
+                      type: 'string',
+                      example: 'Pokémon capturado com sucesso!',
+                    },
+                    data: { $ref: '#/components/schemas/CapturedPokemon' },
+                  },
+                },
+              },
+            },
+          },
+          '400': {
+            description: 'Dados de entrada inválidos (Zod).',
+            content: errorContent(),
+          },
+          '404': {
+            description:
+              'Treinador não encontrado ou Pokémon inexistente na PokéAPI.',
+            content: errorContent(),
+          },
+          '422': {
+            description: 'Regra de negócio: o time ativo já possui 6 Pokémons.',
+            content: errorContent({
+              status: 'error',
+              statusCode: 422,
+              message:
+                'O treinador já possui 6 Pokémons no time ativo. Não é possível capturar mais.',
+              details: { maxTeamSize: 6 },
+            }),
+          },
+          '502': {
+            description: 'Falha ao se comunicar com a PokéAPI.',
+            content: errorContent(),
+          },
+        },
+      },
+    },
+    '/api/v1/trainers/{trainerId}/team': {
+      get: {
+        tags: ['Captures'],
+        summary: 'Lista o time ativo do Treinador',
+        parameters: [trainerIdPathParameter],
+        responses: {
+          '200': {
+            description: 'Time atual do Treinador (até 6 Pokémons).',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    data: { $ref: '#/components/schemas/Team' },
+                  },
+                },
+              },
+            },
+          },
+          '400': {
+            description: 'trainerId não é um UUID válido (Zod).',
+            content: errorContent(),
+          },
+          '404': {
+            description: 'Treinador não encontrado.',
+            content: errorContent(),
+          },
+        },
+      },
+    },
   },
   components: {
     schemas: {
@@ -582,6 +755,76 @@ export const openapiDocument = {
           city: trainerProperties.city,
         },
       },
+      PokedexPokemon: {
+        type: 'object',
+        properties: {
+          pokedexNumber: { type: 'integer', example: 25 },
+          name: { type: 'string', example: 'pikachu' },
+          types: {
+            type: 'array',
+            items: { type: 'string' },
+            example: ['ELECTRIC'],
+          },
+          imageUrl: {
+            type: 'string',
+            nullable: true,
+            example:
+              'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/25.png',
+          },
+          heightMeters: { type: 'number', example: 0.4 },
+          weightKg: { type: 'number', example: 6 },
+          stats: {
+            type: 'object',
+            properties: {
+              hp: { type: 'integer', example: 35 },
+              attack: { type: 'integer', example: 55 },
+              defense: { type: 'integer', example: 40 },
+              specialAttack: { type: 'integer', example: 50 },
+              specialDefense: { type: 'integer', example: 50 },
+              speed: { type: 'integer', example: 90 },
+            },
+          },
+        },
+      },
+      CapturePokemonInput: {
+        type: 'object',
+        required: ['pokemonName'],
+        properties: {
+          pokemonName: {
+            type: 'string',
+            example: 'pikachu',
+            description: 'Nome do Pokémon na PokéAPI.',
+          },
+        },
+      },
+      CapturedPokemon: {
+        type: 'object',
+        properties: {
+          id: { type: 'string', format: 'uuid' },
+          pokedexNumber: { type: 'integer', example: 25 },
+          name: { type: 'string', example: 'pikachu' },
+          types: {
+            type: 'array',
+            items: { type: 'string' },
+            example: ['ELECTRIC'],
+          },
+          imageUrl: { type: 'string', nullable: true },
+          stats: { type: 'object', properties: pokemonStatsProperties },
+          capturedAt: { type: 'string', format: 'date-time' },
+        },
+      },
+      Team: {
+        type: 'object',
+        properties: {
+          trainerId: { type: 'string', format: 'uuid' },
+          size: { type: 'integer', example: 1 },
+          maxSize: { type: 'integer', example: 6 },
+          pokemons: {
+            type: 'array',
+            items: { $ref: '#/components/schemas/CapturedPokemon' },
+          },
+        },
+      },
       ErrorResponse: {
         type: 'object',
         properties: {
@@ -593,7 +836,8 @@ export const openapiDocument = {
           },
           details: {
             type: 'array',
-            description: 'Presente em erros de validação (400) do Zod.',
+            description:
+              'Presente em erros de validação (400) do Zod e em regras de negócio (422).',
             items: {
               type: 'object',
               properties: {
